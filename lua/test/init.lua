@@ -1,6 +1,5 @@
 local M = {}
 
-local window = require("test.window")
 
 function M.setup(opts)
 
@@ -8,6 +7,7 @@ function M.setup(opts)
 
   vim.keymap.set("n", "<leader>t", function()
 
+    local window = require("test.window")
     window.whid()
 
     if vim.fn.has("nvim-0.7.0") ~= 1 then
