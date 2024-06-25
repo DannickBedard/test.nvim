@@ -1,2 +1,2 @@
 # test.nvim
-My repo for testing neovim plugin
+My repo for testing my custom neovim plugin
