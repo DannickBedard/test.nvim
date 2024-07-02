@@ -7,8 +7,8 @@ function M.setup(opts)
 
   vim.keymap.set("n", "<leader>t", function()
 
-    local window = require("test.window")
-    window.whid()
+    local windowManager = require("test.window")
+    windowManager.window()
 
     if vim.fn.has("nvim-0.7.0") ~= 1 then
       vim.api.nvim_err_writeln("Example.nvim requires at least nvim-0.7.0.")

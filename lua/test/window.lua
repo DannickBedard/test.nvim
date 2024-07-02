@@ -7,62 +7,78 @@ local api = vim.api
 local buf, win
 local position = 0
 
-local function center(str)
-  local width = api.nvim_win_get_width(0)
-  local shift = math.floor(width / 2) - math.floor(string.len(str) / 2)
-  return string.rep(' ', shift) .. str
-end
+local border = require("test.border")
+local windowHelper = require("test.windowHelper")
+
 
 local function open_window()
   buf = api.nvim_create_buf(false, true)
   local border_buf = api.nvim_create_buf(false, true)
 
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_buf_set_option(buf, 'filetype', 'whid')
+  api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf})
+  api.nvim_set_option_value('filetype', 'whid', {buf = buf})
 
-  local width = api.nvim_get_option("columns")
-  local height = api.nvim_get_option("lines")
+  local width = api.nvim_win_get_width(0)
+  local height = api.nvim_win_get_height(0)
 
   local win_height = math.ceil(height * 0.8 - 4)
   local win_width = math.ceil(width * 0.8)
   local row = math.ceil((height - win_height) / 2 - 1)
   local col = math.ceil((width - win_width) / 2)
 
+  local split = true
+
+
+  local opts = {
+    -- style = "minimal",
+    relative = "editor",
+    width = win_width,
+    height = win_height,
+    row = row,
+    col = col,
+    -- title = "TESTTING test",
+    -- footer = "TESTTING test"
+  }
+
+  if split == true then
+    opts.width = math.ceil(opts.width / 2)
+    opts.height = math.ceil(opts.height / 2)
+  end
+
   local border_opts = {
     style = "minimal",
     relative = "editor",
     width = win_width + 2,
     height = win_height + 2,
-    row = row - 1,
-    col = col - 1
+    col = (vim.o.columns - width) / 2,
+    row = (vim.o.lines - height) / 2,
   }
 
-  local opts = {
-    style = "minimal",
-    relative = "editor",
-    width = win_width,
-    height = win_height,
-    row = row,
-    col = col
-  }
 
-  local border_lines = { '╔' .. string.rep('═', win_width) .. '╗' }
-  local middle_line = '║' .. string.rep(' ', win_width) .. '║'
+  local currentBorder = border.simpleBorder
+  local border_lines = {}
+  local top_border =  currentBorder[border.CORNER_LEFT_TOP] .. string.rep(currentBorder[border.SIDE_BOTTOM], win_width) .. currentBorder[border.CORNER_RIGHT_TOP] 
+  local bottom_border =  currentBorder[border.CORNER_LEFT_BOTTOM] .. string.rep(currentBorder[border.SIDE_BOTTOM], win_width) .. currentBorder[border.CORNER_RIGHT_BOTTOM] 
+  local middle_line =  currentBorder[border.SIDE] .. string.rep(' ', win_width) .. currentBorder[border.SIDE] 
+
+  table.insert(border_lines, top_border)
 
   for i=1, win_height do
     table.insert(border_lines, middle_line)
   end
 
-  table.insert(border_lines, '╚' .. string.rep('═', win_width) .. '╝')
+  table.insert(border_lines, bottom_border)
   api.nvim_buf_set_lines(border_buf, 0, -1, false, border_lines)
 
   local border_win = api.nvim_open_win(border_buf, true, border_opts)
+
   win = api.nvim_open_win(buf, true, opts)
+  win2 = api.nvim_open_win(buf, true, opts)
   api.nvim_command('au BufWipeout <buffer> exe "silent bwipeout! "'..border_buf)
 
   api.nvim_win_set_option(win, 'cursorline', true)
 
-  api.nvim_buf_set_lines(buf, 0, -1, false, { center('What have i done?'), '', ''})
+  api.nvim_buf_set_lines(buf, 0, -1, false, { windowHelper.center('What have i done?'), '', ''})
   api.nvim_buf_add_highlight(buf, -1, 'WhidHeader', 0, 0, -1)
 end
 
@@ -80,7 +96,7 @@ local function update_view(direction)
     result[k] = '  '..result[k]
   end
 
-  api.nvim_buf_set_lines(buf, 1, 2, false, {center('HEAD~'..position)})
+  api.nvim_buf_set_lines(buf, 1, 2, false, {windowHelper.center('HEAD~'..position)})
   api.nvim_buf_set_lines(buf, 2, 3, false, {"testing"})
 
   api.nvim_buf_set_lines(buf, 4, -1, false, result)
@@ -134,16 +150,36 @@ local function set_mappings()
 
 end
 
-local function whid()
+local function contentOption(opts, key)
+  if opts[key] and opts[key] == true then
+    api.nvim_buf_set_option(buf, key, false)
+  end
+end
+
+local function generateContent(content, opts)
+-- content is array
+  api.nvim_buf_set_lines(buf, 1, 2, false, {windowHelper.center('HEAD~'..position)})
+  api.nvim_buf_set_lines(buf, 2, 3, false, {"testing"})
+
+  api.nvim_buf_set_lines(buf, 4, -1, false, result)
+
+  api.nvim_buf_add_highlight(buf, -1, 'whidSubHeader', 1, 0, -1)
+  contentOption(opts, "modifiable")
+
+end
+
+
+local function window(content, opts)
   position = 0
   open_window()
   set_mappings()
   update_view(0)
   api.nvim_win_set_cursor(win, {4, 0})
+  -- generateContent(content, opts)
 end
 
 return {
-  whid = whid,
+  window = window,
   update_view = update_view,
   open_file = open_file,
   move_cursor = move_cursor,
