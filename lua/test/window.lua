@@ -1,3 +1,8 @@
+-- TODOS :
+-- - [ ] Make custom function to generate different sections
+-- - [ ] Make logique to navigate between sections
+-- ...
+
 local api = vim.api
 local buf, win
 local position = 0
