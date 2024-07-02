@@ -2,7 +2,7 @@ local api = vim.api
 local buf, win
 local position = 0
 
--- local border = require("test.border")
+local border = require("test.border")
 
 local function center(str)
   local width = api.nvim_win_get_width(0)
@@ -32,10 +32,38 @@ local function open_window()
     height = win_height,
     row = row,
     col = col,
-    border = "rounded",
-    title = "TESTTING test",
-    footer = "TESTTING test"
+    -- title = "TESTTING test",
+    -- footer = "TESTTING test"
   }
+
+  local border_opts = {
+    style = "minimal",
+    relative = "editor",
+    width = win_width + 2,
+    height = win_height + 2,
+    row = row - 1,
+    col = col - 1
+  }
+
+
+  local currentBorder = border.simpleBorder
+  local border_lines = {}
+  local top_border =  currentBorder[border.CORNER_LEFT_TOP] .. string.rep(currentBorder[border.SIDE_BOTTOM], win_width) .. currentBorder[border.CORNER_RIGHT_TOP] 
+  local bottom_border =  currentBorder[border.CORNER_LEFT_BOTTOM] .. string.rep(currentBorder[border.SIDE_BOTTOM], win_width) .. currentBorder[border.CORNER_RIGHT_BOTTOM] 
+  local middle_line =  currentBorder[border.SIDE] .. string.rep(' ', win_width) .. currentBorder[border.SIDE] 
+
+  table.insert(border_lines, top_border)
+  local title = "testtest"
+  table.insert(border_lines, title)
+
+  for i=1, win_height do
+    table.insert(border_lines, middle_line)
+  end
+
+  table.insert(border_lines, bottom_border)
+  api.nvim_buf_set_lines(border_buf, 0, -1, false, border_lines)
+
+  local border_win = api.nvim_open_win(border_buf, true, border_opts)
 
   win = api.nvim_open_win(buf, true, opts)
   api.nvim_command('au BufWipeout <buffer> exe "silent bwipeout! "'..border_buf)
@@ -139,7 +167,7 @@ local function window(content, opts)
   set_mappings()
   update_view(0)
   api.nvim_win_set_cursor(win, {4, 0})
-  generateContent(content, opts)
+  -- generateContent(content, opts)
 end
 
 return {
