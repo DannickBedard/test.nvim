@@ -73,7 +73,6 @@ local function open_window()
   local border_win = api.nvim_open_win(border_buf, true, border_opts)
 
   win = api.nvim_open_win(buf, true, opts)
-  win2 = api.nvim_open_win(buf, true, opts)
   api.nvim_command('au BufWipeout <buffer> exe "silent bwipeout! "'..border_buf)
 
   api.nvim_win_set_option(win, 'cursorline', true)
@@ -84,22 +83,34 @@ end
 
 local function update_view(direction)
   api.nvim_buf_set_option(buf, 'modifiable', true)
-  position = position + direction
-  if position < 0 then position = 0 end
 
-  local result = api.nvim_call_function('systemlist', {
-      'git diff-tree --no-commit-id --name-only -r HEAD~'..position
+  -- todo get the files unstaged
+  local unstagedFile = api.nvim_call_function('systemlist', {
+      'git diff --name-status'
     })
 
-  if #result == 0 then table.insert(result, '') end
-  for k,v in pairs(result) do
-    result[k] = '  '..result[k]
+  local result = {}
+
+  -- if #unstagedFile == 0 then table.insert(unstagedFile, '') end
+  for k,v in pairs(unstagedFile) do
+    table.insert(result, unstagedFile[k])
   end
 
-  api.nvim_buf_set_lines(buf, 1, 2, false, {windowHelper.center('HEAD~'..position)})
-  api.nvim_buf_set_lines(buf, 2, 3, false, {"testing"})
+  local stagedFile = api.nvim_call_function('systemlist', {
+      'git diff --name-status --cached'
+    })
 
-  api.nvim_buf_set_lines(buf, 4, -1, false, result)
+  table.insert(result, "--- Staged")
+
+  -- if #stagedFile == 0 then table.insert(stagedFile, '') end
+  for k,v in pairs(stagedFile) do
+    table.insert(result, stagedFile[k])
+  end
+
+  api.nvim_buf_set_lines(buf, 1, 2, false, {"todo voir quoi mettre ici"})
+
+  api.nvim_buf_set_lines(buf, 2, 3, false, {"--- Unstaged"})
+  api.nvim_buf_set_lines(buf, 3, -1, false, result)
 
   api.nvim_buf_add_highlight(buf, -1, 'whidSubHeader', 1, 0, -1)
   api.nvim_buf_set_option(buf, 'modifiable', false)
@@ -111,8 +122,36 @@ end
 
 local function open_file()
   local str = api.nvim_get_current_line()
+  local path = str:match("%s*(%S+)$")
   close_window()
-  api.nvim_command('edit '..str)
+  api.nvim_command('edit '..path)
+end
+
+local function stage_file()
+  local str = api.nvim_get_current_line()
+  local path = str:match("%s*(%S+)$")
+  -- close_window()
+  local command = "git add " .. path
+  vim.fn.system(command)
+  update_view(0)
+end
+
+local function unstage_file()
+  local str = api.nvim_get_current_line()
+  local path = str:match("%s*(%S+)$")
+  -- close_window()
+  local command = "git restore --staged " .. path
+  vim.fn.system(command)
+  update_view(0)
+end
+
+local function discard_file()
+  local str = api.nvim_get_current_line()
+  local path = str:match("%s*(%S+)$")
+  -- close_window()
+  local command = "git restore " .. path
+  vim.fn.system(command)
+  update_view(0)
 end
 
 local function move_cursor()
@@ -128,6 +167,9 @@ local function set_mappings()
     h = 'update_view(-1)',
     l = 'update_view(1)',
     q = 'close_window()',
+    s = 'stage_file()',
+    u = 'unstage_file()',
+    d = 'discard_file()',
     -- k = 'move_cursor()'
   }
 
@@ -139,7 +181,7 @@ local function set_mappings()
 
   -- Disable key while using the plugin
   local other_chars = {
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    'a', 'b', 'c', 'e', 'f', 'g', 'i', 'n', 'o', 'p', 'r', 't', 'v', 'w', 'x', 'y', 'z'
   }
 
   for k,v in ipairs(other_chars) do
@@ -182,6 +224,9 @@ return {
   window = window,
   update_view = update_view,
   open_file = open_file,
+  stage_file = stage_file,
+  unstage_file = unstage_file,
+  discard_file = discard_file,
   move_cursor = move_cursor,
   close_window = close_window
 }

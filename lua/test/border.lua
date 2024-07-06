@@ -57,6 +57,7 @@ simple_thick_border[SPLIT_MIDLE] = "╋"
 simple_thick_border[SPLIT_LEFT_SIDE] = "┣"
 simple_thick_border[SPLIT_RIGHT_SIDE] = "┫"
 
+
 return {
   doubleBorder = double_border,
   simpleBorder = simple_border,
