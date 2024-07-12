@@ -1,4 +1,4 @@
--- TODOS :
+-- TODOS :window
 -- - [ ] Make custom function to generate different sections
 -- - [ ] Make logique to navigate between sections
 -- ...
@@ -75,46 +75,49 @@ local function open_window()
 end
 
 local function update_view(direction)
+  local width = api.nvim_win_get_width(0)
+  local height = api.nvim_win_get_height(0)
+
+  local win_height = math.ceil(height * 0.8 - 4)
+  local win_width = math.ceil(width * 0.8)
   api.nvim_buf_set_option(buf, 'modifiable', true)
 
-  -- todo get the files unstaged
-  local unstagedFile = api.nvim_call_function('systemlist', {
-      'git diff --name-status'
-    })
+  local currentBorder = border.simpleBorder
 
   local result = {}
 
-  -- if #unstagedFile == 0 then table.insert(unstagedFile, '') end
+  local unstagedFile = api.nvim_call_function('systemlist', {
+      'git diff --name-status'
+    })
+  table.insert(result, border.fn.topBorderText("Unstaged", currentBorder, win_width))
   for k,v in pairs(unstagedFile) do
-    table.insert(result, unstagedFile[k])
+    table.insert(result, border.fn.middleBorderText(unstagedFile[k], currentBorder, win_width))
   end
+  table.insert(result, border.fn.bottomBorder(currentBorder, win_width))
 
   local stagedFile = api.nvim_call_function('systemlist', {
       'git diff --name-status --cached'
     })
 
-  table.insert(result, "--- Staged")
-
-  -- if #stagedFile == 0 then table.insert(stagedFile, '') end
+  table.insert(result, border.fn.topBorderText("Staged", currentBorder, win_width))
   for k,v in pairs(stagedFile) do
-    table.insert(result, stagedFile[k])
+    table.insert(result, border.fn.middleBorderText(stagedFile[k], currentBorder, win_width))
   end
+
+  table.insert(result, border.fn.bottomBorder(currentBorder, win_width))
 
   local completStatus = api.nvim_call_function('systemlist', {
       'git status'
     })
-
-  table.insert(result, "--- Complet status")
-
-  -- if #stagedFile == 0 then table.insert(stagedFile, '') end
+  table.insert(result, border.fn.topBorderText("Complet status", currentBorder, win_width))
   for k,v in pairs(completStatus) do
-    table.insert(result, completStatus[k])
+    table.insert(result, border.fn.middleBorderText(completStatus[k], currentBorder, win_width))
   end
+  table.insert(result, border.fn.bottomBorder(currentBorder, win_width))
 
   api.nvim_buf_set_lines(buf, 1, 2, false, {"todo voir quoi mettre ici"})
 
-  api.nvim_buf_set_lines(buf, 2, 3, false, {"--- Unstaged"})
-  api.nvim_buf_set_lines(buf, 3, -1, false, result)
+  api.nvim_buf_set_lines(buf, 2, -1, false, result)
 
   api.nvim_buf_add_highlight(buf, -1, 'whidSubHeader', 1, 0, -1)
   api.nvim_buf_set_option(buf, 'modifiable', false)
@@ -133,17 +136,16 @@ end
 
 local function stage_file()
   local str = api.nvim_get_current_line()
-  local path = str:match("%s*(%S+)$")
-  -- close_window()
+   local path = str:sub(2):match("%s*%a+%s+(.+)")
   local command = "git add " .. path
+  print(command)
   vim.fn.system(command)
   update_view(0)
 end
 
 local function unstage_file()
   local str = api.nvim_get_current_line()
-  local path = str:match("%s*(%S+)$")
-  -- close_window()
+  local path = str:sub(2):match("%s*%a+%s+(.+)")
   local command = "git restore --staged " .. path
   vim.fn.system(command)
   update_view(0)
@@ -157,6 +159,14 @@ local function discard_file()
   vim.fn.system(command)
   update_view(0)
 end
+
+local function test()
+  local stringTest = "M lua/test/border.lua"
+  local stringTest2 = "m lua/test/border.lua"
+  print('Test1 : ' .. string.len(stringTest))
+  print('Test2 : ' .. string.len(stringTest2))
+end
+
 
 local function commit()
   local buf = api.nvim_create_buf(false, true)
@@ -205,6 +215,7 @@ local function set_mappings()
     u = 'unstage_file()',
     d = 'discard_file()',
     c = 'commit()',
+    t = 'test()',
   }
 
   for k,v in pairs(mappings) do
@@ -215,7 +226,7 @@ local function set_mappings()
 
   -- Disable key while using the plugin
   local other_chars = {
-    'a', 'b', 'e', 'f', 'g', 'i', 'n', 'o', 'p', 'r', 't', 'v', 'w', 'x', 'y', 'z'
+    'a', 'b', 'e', 'f', 'g', 'i', 'n', 'o', 'p', 'r', 'v', 'w', 'x', 'y', 'z'
   }
 
   for k,v in ipairs(other_chars) do
@@ -262,6 +273,7 @@ return {
   unstage_file = unstage_file,
   discard_file = discard_file,
   commit = commit,
+  test = test,
   move_cursor = move_cursor,
   close_window = close_window
 }
