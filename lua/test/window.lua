@@ -10,6 +10,7 @@ local position = 0
 
 local border = require("test.border")
 local windowHelper = require("test.windowHelper")
+local currentBorder = border.doubleBorder
 
 
 local function open_window()
@@ -76,13 +77,13 @@ end
 
 local function update_view(direction)
   local width = api.nvim_win_get_width(0)
+
   local height = api.nvim_win_get_height(0)
 
   local win_height = math.ceil(height * 0.8 - 4)
   local win_width = math.ceil(width * 0.8)
   api.nvim_buf_set_option(buf, 'modifiable', true)
 
-  local currentBorder = border.simpleBorder
 
   local result = {}
 
@@ -127,25 +128,40 @@ local function close_window()
   api.nvim_win_close(win, true)
 end
 
+local function test()
+  local stringTest = "| m lua/test/border.lua         |"
+  stringTest = stringTest:gsub(currentBorder[border.SIDE], "")
+  print("stringTest1 : ")
+  print(stringTest)
+  stringTest = stringTest:match("^%s*(.-)%s*$")
+  print("stringTest2 : ")
+  print(stringTest)
+   local path = stringTest:match("%s*%a+%s+(.+)")
+  print('Test2 : ' .. path)
+end
+
+local function getFilePathFromGitstatus(gitStatus)
+  gitStatus = gitStatus:gsub(currentBorder[border.SIDE], "")
+  gitStatus = gitStatus:match("^%s*(.-)%s*$")
+  local path = gitStatus:match("%s*%a+%s+(.+)")
+  return path
+end
+
 local function open_file()
-  local str = api.nvim_get_current_line()
-  local path = str:match("%s*(%S+)$")
   close_window()
-  api.nvim_command('edit '..path)
+  api.nvim_command('edit '..getFilePathFromGitstatus(api.nvim_get_current_line()))
 end
 
 local function stage_file()
-  local str = api.nvim_get_current_line()
-   local path = str:sub(2):match("%s*%a+%s+(.+)")
+  local path = getFilePathFromGitstatus(api.nvim_get_current_line())
   local command = "git add " .. path
-  print(command)
+  print('test'..command.. "test")
   vim.fn.system(command)
   update_view(0)
 end
 
 local function unstage_file()
-  local str = api.nvim_get_current_line()
-  local path = str:sub(2):match("%s*%a+%s+(.+)")
+  local path = getFilePathFromGitstatus(api.nvim_get_current_line())
   local command = "git restore --staged " .. path
   vim.fn.system(command)
   update_view(0)
@@ -153,20 +169,11 @@ end
 
 local function discard_file()
   local str = api.nvim_get_current_line()
-  local path = str:match("%s*(%S+)$")
-  -- close_window()
+  local path = str:sub(2):match("%s*%a+%s+(.+)")
   local command = "git restore " .. path
   vim.fn.system(command)
   update_view(0)
 end
-
-local function test()
-  local stringTest = "M lua/test/border.lua"
-  local stringTest2 = "m lua/test/border.lua"
-  print('Test1 : ' .. string.len(stringTest))
-  print('Test2 : ' .. string.len(stringTest2))
-end
-
 
 local function commit()
   local buf = api.nvim_create_buf(false, true)
