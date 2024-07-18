@@ -175,6 +175,12 @@ local function discard_file()
   update_view(0)
 end
 
+local function git_push()
+  local command = "git push"
+  vim.fn.system(command)
+  update_view(0)
+end
+
 local function commit()
   local commitBuf = api.nvim_create_buf(false, true)
   
@@ -217,6 +223,7 @@ local function set_mappings()
     u = 'unstage_file()',
     d = 'discard_file()',
     c = 'commit()',
+    p = 'git_push()',
     t = 'test()',
   }
 
@@ -228,7 +235,7 @@ local function set_mappings()
 
   -- Disable key while using the plugin
   local other_chars = {
-    'a', 'b', 'e', 'f', 'g', 'i', 'n', 'o', 'p', 'r', 'v', 'w', 'x', 'y', 'z'
+    'a', 'b', 'e', 'f', 'g', 'i', 'n', 'o', 'r', 'v', 'w', 'x', 'y', 'z'
   }
 
   for k,v in ipairs(other_chars) do
@@ -275,7 +282,7 @@ return {
   unstage_file = unstage_file,
   discard_file = discard_file,
   commit = commit,
+  git_push = git_push,
   test = test,
-  move_cursor = move_cursor,
   close_window = close_window
 }
