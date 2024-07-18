@@ -176,10 +176,10 @@ local function discard_file()
 end
 
 local function commit()
-  local buf = api.nvim_create_buf(false, true)
+  local commitBuf = api.nvim_create_buf(false, true)
   
   -- Set the buffer to unmodified to avoid the E5108 error
-  api.nvim_buf_set_option(buf, 'modifiable', false)
+  api.nvim_buf_set_option(commitBuf, 'modifiable', false)
 
   -- Open a new window for the terminal buffer
   local opts = {
@@ -191,30 +191,23 @@ local function commit()
     col = 10,
     border = "rounded"
   }
-  local win = api.nvim_open_win(buf, true, opts)
+  local win = api.nvim_open_win(commitBuf, true, opts)
 
   -- Run the git commit command in the terminal buffer
   vim.fn.termopen("git commit", {
     on_exit = function(_, exit_code, _)
       if exit_code == 0 then
-        update_view(0)
         print("Commit successful")
       else
-        update_view(0)
         print("Commit failed")
       end
       -- Close the window and buffer
       api.nvim_win_close(win, true)
-      api.nvim_buf_delete(buf, { force = true })
+      api.nvim_buf_delete(commitBuf, { force = true })
+      update_view(0)
     end
   })
-  update_view(0)
 end
-
--- local function move_cursor()
---   local new_pos = math.max(4, api.nvim_win_get_cursor(win)[1] - 1)
---   api.nvim_win_set_cursor(win, {new_pos, 0})
--- end
 
 local function set_mappings()
   local mappings = {
