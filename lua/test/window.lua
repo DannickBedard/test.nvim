@@ -197,8 +197,10 @@ local function commit()
   vim.fn.termopen("git commit", {
     on_exit = function(_, exit_code, _)
       if exit_code == 0 then
+        update_view(0)
         print("Commit successful")
       else
+        update_view(0)
         print("Commit failed")
       end
       -- Close the window and buffer
