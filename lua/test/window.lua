@@ -1,5 +1,4 @@
 -- TODOS :window
--- - [ ] Make custom function to generate different sections
 -- - [ ] Make logique to navigate between sections
 -- ...
 
